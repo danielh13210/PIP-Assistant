@@ -104,12 +104,7 @@ struct ContentView: View {
                     .disabled(endOfData)
                     
                     Button("Refresh") {
-                        busy=true
-                        Task {
-                            packages = await retriever.fetchPyPiPackages()
-                            applyFilter(searchText)
-                            busy=false
-                        }
+                        updatePackages()
                     }
                 }
                 .padding()
