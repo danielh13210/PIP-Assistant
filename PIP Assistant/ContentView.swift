@@ -25,6 +25,7 @@ struct ContentView: View {
     @StateObject private var retriever = Retriever()
     @State private var searchText = ""
     @State private var busy = false
+    @State private var busyMessage=""
     @State private var selectedPackage:Binding<Package>?=nil
     
     @AppStorage("nameColumnWidth") private var nameColumnWidth: Double = 200
@@ -111,6 +112,10 @@ struct ContentView: View {
             }
             if(busy){
                 Rectangle().opacity(0.5).onTapGesture {}
+                VStack {
+                    Spinner()
+                    Text(busyMessage).foregroundStyle(Color.white)
+                }
             }
         }
         .onChange(of: busy,initial:true){ _,newBusy in
@@ -124,6 +129,7 @@ struct ContentView: View {
     
     private func updatePackages(){
         busy=true
+        busyMessage="Loading..."
         Task {
             packages = await retriever.fetchPyPiPackages()
             applyFilter(searchText) // initial load
@@ -132,7 +138,10 @@ struct ContentView: View {
     }
 
     private func applyFilter(_ text: String) {
-        busy=true
+        if(!text.isEmpty){
+            busy=true
+            busyMessage="Searching..."
+        }
         Task.detached {
             let matches: [Package]
             if text.isEmpty {
