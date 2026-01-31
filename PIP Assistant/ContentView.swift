@@ -24,7 +24,10 @@ struct ContentView: View {
     @State private var isShowingConfirmation = false
     @StateObject private var retriever = Retriever()
     @State private var searchText = ""
-    @State private var busy = false
+    private var busy : Bool {
+        !currentBlockingAction.isEmpty
+    }
+    @State private var currentBlockingAction=""
     @State private var busyMessage=""
     @State private var selectedPackage:Binding<Package>?=nil
     
@@ -64,11 +67,13 @@ struct ContentView: View {
                         .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
                             if selectedPackage?.installed.wrappedValue ?? false {
                                 Button("Uninstall", role: .destructive) {
-                                    selectedPackage?.installed.wrappedValue.toggle()
+                                    currentBlockingAction="install_uninstall"
+                                    busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
                                 }
                             } else {
                                 Button("Install") {
-                                    selectedPackage?.installed.wrappedValue.toggle()
+                                    currentBlockingAction="install_uninstall"
+                                    busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
                                 }
                             }
                             Button("Cancel", role: .cancel) {}
@@ -128,18 +133,18 @@ struct ContentView: View {
     }
     
     private func updatePackages(){
-        busy=true
+        currentBlockingAction="refresh"
         busyMessage="Loading..."
         Task {
             packages = await retriever.fetchPyPiPackages()
             applyFilter(searchText) // initial load
-            busy=false
+            currentBlockingAction=""
         }
     }
 
     private func applyFilter(_ text: String) {
         if(!text.isEmpty){
-            busy=true
+            currentBlockingAction="searching"
             busyMessage="Searching..."
         }
         Task.detached {
@@ -156,7 +161,7 @@ struct ContentView: View {
                 currentPage = 0
                 visiblePackages = []
                 loadNextPage()
-                busy=false
+                currentBlockingAction=""
             }
         }
     }
