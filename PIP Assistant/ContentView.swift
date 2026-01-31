@@ -39,51 +39,55 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             VStack {
-                Table($visiblePackages) {
-                    TableColumn ("Name") { $pkg in
-                        Text(pkg.name)
-                            .persistWidth(to: $nameColumnWidth)
-                    }
-                    .width(min:100,ideal:nameColumnWidth)
-                    TableColumn ("Version") { $pkg in
-                        Text(pkg.version)
-                            .persistWidth(to: $versionColumnWidth)
-                    }
-                    .width(min:50,ideal:versionColumnWidth,max:130)
-                    TableColumn("Installed") { $pkg in
-                        Text(pkg.installedMsg)
-                            .persistWidth(to: $installedColumnWidth)
-                    }
-                    .width(min:30,ideal:installedColumnWidth,max:50)
-                    TableColumn("Action") { $pkg in
-                        Button(action: {
-                            selectedPackage=$pkg
-                            isShowingConfirmation=true
-                        }) {
-                            Text(pkg.installAction)
+                ZStack {
+                    Table($visiblePackages) {
+                        TableColumn ("Name") { $pkg in
+                            Text(pkg.name)
+                                .persistWidth(to: $nameColumnWidth)
                         }
-                        .persistWidth(to: $actionColumnWidth)
-                        .buttonStyle(.plain)
-                        .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
-                            if selectedPackage?.installed.wrappedValue ?? false {
-                                Button("Uninstall", role: .destructive) {
-                                    currentBlockingAction="install_uninstall"
-                                    busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
-                                }
-                            } else {
-                                Button("Install") {
-                                    currentBlockingAction="install_uninstall"
-                                    busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
-                                }
+                        .width(min:100,ideal:nameColumnWidth)
+                        TableColumn ("Version") { $pkg in
+                            Text(pkg.version)
+                                .persistWidth(to: $versionColumnWidth)
+                        }
+                        .width(min:50,ideal:versionColumnWidth,max:130)
+                        TableColumn("Installed") { $pkg in
+                            Text(pkg.installedMsg)
+                                .persistWidth(to: $installedColumnWidth)
+                        }
+                        .width(min:30,ideal:installedColumnWidth,max:50)
+                        TableColumn("Action") { $pkg in
+                            Button(action: {
+                                selectedPackage=$pkg
+                                isShowingConfirmation=true
+                            }) {
+                                Text(pkg.installAction)
                             }
-                            Button("Cancel", role: .cancel) {}
-                        } message: {
-                            Text("Are you sure you want to \((selectedPackage?.installed.wrappedValue ?? false) ? "uninstall" : "install") '\(selectedPackage?.wrappedValue.name ?? "")'?")
+                            .persistWidth(to: $actionColumnWidth)
+                            .buttonStyle(.plain)
+                            .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
+                                if selectedPackage?.installed.wrappedValue ?? false {
+                                    Button("Uninstall", role: .destructive) {
+                                        currentBlockingAction="install_uninstall"
+                                        busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
+                                    }
+                                } else {
+                                    Button("Install") {
+                                        currentBlockingAction="install_uninstall"
+                                        busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
+                                    }
+                                }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text("Are you sure you want to \((selectedPackage?.installed.wrappedValue ?? false) ? "uninstall" : "install") '\(selectedPackage?.wrappedValue.name ?? "")'?")
+                            }
                         }
+                        .width(min:30,ideal:actionColumnWidth,max:50)
                     }
-                    .width(min:30,ideal:actionColumnWidth,max:50)
+                    Color.clear
+                        .searchable(text: $searchText, prompt: "Search packages")
+                        .disabled(busy && (currentBlockingAction != "searching"))
                 }
-                .searchable(text: $searchText, prompt: "Search packages")
                 .onChange(of: searchText, initial: true) { _, newValue in
                     Task {
                         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
