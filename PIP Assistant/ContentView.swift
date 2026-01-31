@@ -70,11 +70,21 @@ struct ContentView: View {
                                     Button("Uninstall", role: .destructive) {
                                         currentBlockingAction="install_uninstall"
                                         busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
+                                        if let name = selectedPackage?.wrappedValue.name {
+                                            installUninstall(command: "uninstall", package: name)
+                                        } else {
+                                            currentBlockingAction=""
+                                        }
                                     }
                                 } else {
                                     Button("Install") {
                                         currentBlockingAction="install_uninstall"
                                         busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
+                                        if let name = selectedPackage?.wrappedValue.name {
+                                            installUninstall(command: "install", package: name)
+                                        } else {
+                                            currentBlockingAction=""
+                                        }
                                     }
                                 }
                                 Button("Cancel", role: .cancel) {}
@@ -103,6 +113,16 @@ struct ContentView: View {
                         queue: .main
                     ) { _ in
                         updatePackages()
+                    }
+                    NotificationCenter.default.addObserver(
+                        forName: .installUninstallComplete,
+                        object: nil,
+                        queue: .main
+                    ) { _ in
+                        if currentBlockingAction=="install_uninstall" {
+                            currentBlockingAction=""
+                            selectedPackage?.installed.wrappedValue.toggle()
+                        }
                     }
 
                 }

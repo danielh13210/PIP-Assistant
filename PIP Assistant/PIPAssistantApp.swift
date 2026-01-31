@@ -18,9 +18,21 @@ struct PIPAssistantApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var busy = false
     var body: some Scene {
-        WindowGroup {
+        WindowGroup (Bundle.main.appName){
             ContentView()
-        }.commands {
+                .onOpenURL { url in
+                    if url.scheme=="pipassistant" {
+                        if url.host=="busy_complete" {
+                            NotificationCenter.default.post(
+                                name:.installUninstallComplete,
+                                object:nil
+                            )
+                        }
+                    }
+                }
+        }
+        .disableSpawnOnExternalEvents()
+        .commands {
             // Replaces the "New Window" (newItem) group with an empty view
             CommandGroup(replacing: .newItem) {
                 Button("Refresh"){
@@ -51,4 +63,19 @@ struct PIPAssistantApp: App {
 extension Notification.Name {
     static let trigRefresh = Notification.Name("trigRefresh")
     static let updateBusy = Notification.Name("updateBusy")
+    static let installUninstallComplete = Notification.Name("installUninstallComplete")
+}
+
+extension WindowGroup {
+    func disableSpawnOnExternalEvents() -> some Scene {
+        return self.handlesExternalEvents(matching: Set(["*"]))
+    }
+}
+
+extension Bundle {
+    var appName: String {
+        object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+        ?? object(forInfoDictionaryKey: "CFBundleName") as? String
+        ?? "A SwiftUI Application"
+    }
 }
