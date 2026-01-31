@@ -108,10 +108,6 @@ struct ContentView: View {
                         loadNextPage()
                     }
                     .disabled(endOfData)
-                    
-                    Button("Refresh") {
-                        updatePackages()
-                    }
                 }
                 .padding()
             }
