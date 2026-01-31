@@ -14,7 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct lazyvlistApp: App {
+struct PIPAssistantApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var busy = false
     var body: some Scene {
