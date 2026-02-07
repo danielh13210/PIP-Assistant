@@ -15,6 +15,8 @@ class Retriever : ObservableObject{
             return []
         }
         
+        let packages_installed=listPackages()
+        
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             print("Data fetched")
@@ -31,7 +33,7 @@ class Retriever : ObservableObject{
                 var packages: [Package] = []
                 for i in 0..<names.count {
                     let name=names[i]
-                    packages.append(Package(name: name, version: "",installed: false))
+                    packages.append(Package(name: name, version: "",installed: packages_installed.contains(name)))
                 }
                 if(!failed) {
                     ready=true

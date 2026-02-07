@@ -47,3 +47,39 @@ func installUninstall(command: String, package: String) {
     }
 }
 
+func runShellScriptAndCaptureOutput(at scriptURL: URL) -> String {
+    let process = Process()
+    process.executableURL = scriptURL   // your script must be executable (chmod +x)
+    
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = pipe
+    
+    do {
+        try process.run()
+        process.waitUntilExit()
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        if let output = String(data: data, encoding: .utf8) {
+            return output
+        }
+    } catch {
+        print("Error running script: \(error)")
+    }
+    return ""
+}
+
+// List locally installed packages
+func listPackages() -> [String] {
+    if let scriptURL = Bundle.main.url(forResource: "pkglist", withExtension: "sh") {
+        let data=runShellScriptAndCaptureOutput(at: scriptURL)
+        do {
+            let json=try JSONDecoder().decode([String].self, from: data.data(using: .utf8)!)
+            return json
+        } catch {
+            print("Error decoding: \(error)")
+        }
+    }
+    return []
+}
+
