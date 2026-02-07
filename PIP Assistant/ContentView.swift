@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var currentPage = 0
     let pageSize = 500   // adjust for performance
     @State private var isShowingConfirmation = false
+    @State private var isUpdating = false
     @StateObject private var retriever = Retriever()
     @State private var searchText = ""
     private var busy : Bool {
@@ -57,40 +58,64 @@ struct ContentView: View {
                         }
                         .width(min:30,ideal:installedColumnWidth,max:50)
                         TableColumn("Action") { $pkg in
-                            Button(action: {
-                                selectedPackage=$pkg
-                                isShowingConfirmation=true
-                            }) {
-                                Text(pkg.installAction)
-                            }
-                            .disabled(pkg.installed && isLocked(name: pkg.name))
-                            .persistWidth(to: $actionColumnWidth)
-                            .buttonStyle(.plain)
-                            .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
-                                if selectedPackage?.installed.wrappedValue ?? false {
-                                    Button("Uninstall", role: .destructive) {
-                                        currentBlockingAction="install_uninstall"
-                                        busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
-                                        if let name = selectedPackage?.wrappedValue.name {
-                                            installUninstall(command: "uninstall", package: name)
-                                        } else {
-                                            currentBlockingAction=""
-                                        }
-                                    }
-                                } else {
-                                    Button("Install") {
-                                        currentBlockingAction="install_uninstall"
-                                        busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
-                                        if let name = selectedPackage?.wrappedValue.name {
-                                            installUninstall(command: "install", package: name)
-                                        } else {
-                                            currentBlockingAction=""
-                                        }
+                            HStack {
+                                if(pkg.hasUpdates){
+                                    Button(action: {
+                                        selectedPackage=$pkg
+                                        isUpdating=true
+                                        isShowingConfirmation=true
+                                    }) {
+                                        Text("⬆️")
                                     }
                                 }
-                                Button("Cancel", role: .cancel) {}
-                            } message: {
-                                Text("Are you sure you want to \((selectedPackage?.installed.wrappedValue ?? false) ? "uninstall" : "install") '\(selectedPackage?.wrappedValue.name ?? "")'?")
+                                Button(action: {
+                                    selectedPackage=$pkg
+                                    isShowingConfirmation=true
+                                    isUpdating=false
+                                }) {
+                                    Text(pkg.installAction)
+                                }
+                                .disabled(pkg.installed && !pkg.hasUpdates && isLocked(name: pkg.name))
+                                .persistWidth(to: $actionColumnWidth)
+                                .buttonStyle(.plain)
+                                .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
+                                    if selectedPackage?.installed.wrappedValue ?? false {
+                                        if isUpdating {
+                                            Button("Upgrade") {
+                                                currentBlockingAction="install_uninstall"
+                                                busyMessage="Upgrading \(selectedPackage?.wrappedValue.name ?? "")"
+                                                if let name = selectedPackage?.wrappedValue.name {
+                                                    installUninstall(command: "upgrade", package: name)
+                                                } else {
+                                                    currentBlockingAction=""
+                                                }
+                                            }
+                                        } else {
+                                            Button("Uninstall", role: .destructive) {
+                                                currentBlockingAction="install_uninstall"
+                                                busyMessage="Uninstalling \(selectedPackage?.wrappedValue.name ?? "")"
+                                                if let name = selectedPackage?.wrappedValue.name {
+                                                    installUninstall(command: "uninstall", package: name)
+                                                } else {
+                                                    currentBlockingAction=""
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Button("Install") {
+                                            currentBlockingAction="install_uninstall"
+                                            busyMessage="Installing \(selectedPackage?.wrappedValue.name ?? "")"
+                                            if let name = selectedPackage?.wrappedValue.name {
+                                                installUninstall(command: "install", package: name)
+                                            } else {
+                                                currentBlockingAction=""
+                                            }
+                                        }
+                                    }
+                                    Button("Cancel", role: .cancel) {}
+                                } message: {
+                                    Text("Are you sure you want to \((selectedPackage?.installed.wrappedValue ?? false) ? (isUpdating ? "upgrade" : "uninstall") : "install") '\(selectedPackage?.wrappedValue.name ?? "")'?")
+                                }
                             }
                         }
                         .width(min:30,ideal:actionColumnWidth,max:50)

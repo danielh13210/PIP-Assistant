@@ -16,6 +16,7 @@ class Retriever : ObservableObject{
         }
         
         let packages_installed=listPackages()
+        let has_updates=listUpgradablePackages()
         
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
@@ -33,7 +34,7 @@ class Retriever : ObservableObject{
                 var packages: [Package] = []
                 for i in 0..<names.count {
                     let name=names[i]
-                    packages.append(Package(name: name, version: "",installed: packages_installed.contains(name)))
+                    packages.append(Package(name: name, version: "",installed: packages_installed.contains(name),hasUpdates: has_updates.contains(name)))
                 }
                 if(!failed) {
                     ready=true

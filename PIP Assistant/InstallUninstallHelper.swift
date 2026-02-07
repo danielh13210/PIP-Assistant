@@ -86,6 +86,20 @@ func listPackages() -> [String] {
     return []
 }
 
+// List locally installed packages
+func listUpgradablePackages() -> [String] {
+    if let scriptURL = Bundle.main.url(forResource: "outdatedpackages", withExtension: "sh") {
+        let data=runShellScriptAndCaptureOutput(at: scriptURL)
+        do {
+            let json=try JSONDecoder().decode([String].self, from: data.data(using: .utf8)!)
+            return json
+        } catch {
+            print("Error decoding: \(error)")
+        }
+    }
+    return []
+}
+
 func isLocked(name: String) -> Bool {
     return locked_packages.contains(name)
 }
