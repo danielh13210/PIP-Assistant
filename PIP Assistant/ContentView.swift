@@ -147,7 +147,7 @@ struct ContentView: View {
                     ) { _ in
                         if currentBlockingAction=="install_uninstall" {
                             currentBlockingAction=""
-                            selectedPackage?.installed.wrappedValue.toggle()
+                            updatePackages()
                         }
                     }
 
