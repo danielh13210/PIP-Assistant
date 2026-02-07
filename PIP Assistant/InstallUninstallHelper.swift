@@ -13,6 +13,9 @@ enum FileError: Error {
     case noSuchFile(path: String)
 }
 
+// prevent these from being uninstalled
+let locked_packages = ["pip"]
+
 func installUninstall(command: String, package: String) {
     let fileManager = FileManager.default
     
@@ -83,3 +86,6 @@ func listPackages() -> [String] {
     return []
 }
 
+func isLocked(name: String) -> Bool {
+    return locked_packages.contains(name)
+}

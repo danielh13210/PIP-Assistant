@@ -63,6 +63,7 @@ struct ContentView: View {
                             }) {
                                 Text(pkg.installAction)
                             }
+                            .disabled(pkg.installed && isLocked(name: pkg.name))
                             .persistWidth(to: $actionColumnWidth)
                             .buttonStyle(.plain)
                             .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {

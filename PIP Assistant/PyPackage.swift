@@ -7,7 +7,7 @@ struct Package : Identifiable, Equatable{
     let version: String
     var installed: Bool
     var installedMsg :String {
-        installed ? "✔️" : ""
+        (installed ? "✔️" : "")+(installed && isLocked(name: name) ? "🔒" : "")
     }
     var installAction: String {
         installed ? "🗑️" : "⬇️"
