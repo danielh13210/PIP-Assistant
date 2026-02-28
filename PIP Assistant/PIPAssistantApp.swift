@@ -30,8 +30,8 @@ struct PIPAssistantApp: App {
                         }
                     }
                 }
+                .disableSpawnOnExternalEvents()
         }
-        .disableSpawnOnExternalEvents()
         .commands {
             // Replaces the "New Window" (newItem) group with an empty view
             CommandGroup(replacing: .newItem) {
@@ -66,9 +66,9 @@ extension Notification.Name {
     static let installUninstallComplete = Notification.Name("installUninstallComplete")
 }
 
-extension WindowGroup {
-    func disableSpawnOnExternalEvents() -> some Scene {
-        return self.handlesExternalEvents(matching: Set(["*"]))
+extension View {
+    func disableSpawnOnExternalEvents() -> some View {
+        return self.handlesExternalEvents(preferring: ["*"], allowing: ["*"])
     }
 }
 
