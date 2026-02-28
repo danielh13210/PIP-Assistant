@@ -8,3 +8,4 @@ else
 fi
 pip3 $CMD "{{PACKAGE_NAME}}"
 open pipassistant://busy_complete
+echo "The operation has completed. You may now close this window."
