@@ -53,7 +53,7 @@ struct ContentView: View {
                         }
                         .width(min:50,ideal:versionColumnWidth,max:130)
                         TableColumn("Installed") { $pkg in
-                            Text(pkg.installedMsg)
+                            pkg.installedLabel()
                                 .persistWidth(to: $installedColumnWidth)
                         }
                         .width(min:30,ideal:installedColumnWidth,max:50)
@@ -65,7 +65,7 @@ struct ContentView: View {
                                         isUpdating=true
                                         isShowingConfirmation=true
                                     }) {
-                                        Text("⬆️")
+                                        Text("⬆️").help("Update")
                                     }
                                 }
                                 Button(action: {
@@ -73,7 +73,7 @@ struct ContentView: View {
                                     isShowingConfirmation=true
                                     isUpdating=false
                                 }) {
-                                    Text(pkg.installAction)
+                                    pkg.installActionLabel()
                                 }
                                 .disabled(pkg.installed && !pkg.hasUpdates && isLocked(name: pkg.name))
                                 .persistWidth(to: $actionColumnWidth)
