@@ -5,7 +5,7 @@ struct ContentView: View {
     @State private var visiblePackages:[Package] = []
     @State private var filteredPackages:[Package] = []
     @State private var currentPage = 0
-    let pageSize = 500   // adjust for performance
+    let pageSize = 100   // adjust for performance
     let loadNextPageThreshold = 20
     @State private var isShowingConfirmation = false
     @State private var isUpdating = false
@@ -110,7 +110,7 @@ struct ContentView: View {
                     Task {
                         try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
                         if Task.isCancelled { return }
-                        applyFilter(newValue)
+                        await applyFilter(newValue)
                     }
                 }
                 .onAppear {
@@ -158,41 +158,78 @@ struct ContentView: View {
         busyMessage="Loading..."
         Task {
             packages = await retriever.fetchPyPiPackages()
-            applyFilter(searchText) // initial load
+            await applyFilter(searchText) // initial load
+            let start = currentPage * pageSize
+            let end = min(start + pageSize, filteredPackages.count)
+            await updateVersions(start: start,end: end)
+            print("update versions done")
             currentBlockingAction=""
         }
     }
 
-    private func applyFilter(_ text: String) {
+    private func applyFilter(_ text: String) async {
         if(!text.isEmpty){
             currentBlockingAction="searching"
             busyMessage="Searching..."
         }
-        Task.detached {
-            let matches: [Package]
-            if text.isEmpty {
-                matches = await packages
-            } else {
-                matches = await packages.filter { pkg in
-                    pkg.name.localizedCaseInsensitiveContains(text)
-                }
+        let matches: [Package]
+        if text.isEmpty {
+            matches = packages
+        } else {
+            matches = packages.filter { pkg in
+                pkg.name.localizedCaseInsensitiveContains(text)
             }
-            await MainActor.run {
-                filteredPackages = matches
-                currentPage = 0
-                visiblePackages = []
-                loadNextPage()
-                currentBlockingAction=""
-            }
+        }
+        await MainActor.run {
+            filteredPackages = matches
+            currentPage = 0
+            visiblePackages = []
+            loadNextPage()
+            currentBlockingAction=""
         }
     }
 
+    private func updateVersions(start: Int, end: Int) async {
+        let sliceIndices = filteredPackages.index(filteredPackages.startIndex, offsetBy: start)..<filteredPackages.index(filteredPackages.startIndex, offsetBy: min(end, filteredPackages.count))
+
+        // 1. Fetch all versions concurrently via a TaskGroup
+        let fetchedResults = await withTaskGroup(of: (Int, String).self) { group in
+            for index in sliceIndices {
+                let packageName = filteredPackages[index].name
+                
+                group.addTask {
+                    // Fires all network requests at the exact same time
+                    let version = await self.retriever.getVersionNumber(packageName: packageName)
+                    return (index, version)
+                }
+            }
+            
+            // Collect results into a temporary dictionary
+            var results: [Int: String] = [:]
+            for await (index, version) in group {
+                results[index] = version
+            }
+            return results
+        }
+
+        // 2. Safely update your array sequentially on a single thread
+        for (index, version) in fetchedResults {
+            filteredPackages[index].version = version
+        }
+    }
+
+    
     private func loadNextPage() {
+        currentBlockingAction="Loading more entries..."
         let start = currentPage * pageSize
         let end = min(start + pageSize, filteredPackages.count)
         if start < end {
-            visiblePackages.append(contentsOf: filteredPackages[start..<end])
-            currentPage += 1
+            Task {
+                await updateVersions(start: start,end: end)
+                visiblePackages.append(contentsOf: filteredPackages[start..<end])
+                currentPage += 1
+                currentBlockingAction=""
+            }
         }
     }
 

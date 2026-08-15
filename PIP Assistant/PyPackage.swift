@@ -5,7 +5,7 @@ struct Package : Identifiable, Equatable{
     
     var id: String { name }
     let name: String
-    let version: String
+    var version: String
     var installed: Bool
     var hasUpdates: Bool
     var installedMsg :String {

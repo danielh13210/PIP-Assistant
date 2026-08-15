@@ -77,7 +77,6 @@ class Retriever : ObservableObject{
         //print("Getting version for package \(packageName)")
         guard let url = URL(string: "https://pypi.org/pypi/\(packageName)/json") else
         {
-            failed=true
             return "" 
         }
             
@@ -89,11 +88,9 @@ class Retriever : ObservableObject{
         } catch let DecodingError.keyNotFound(key, context) {
             print("Missing key:", key.stringValue)
             print("Debug Description:", context.debugDescription)
-            failed=true
             return ""
         } catch {
             print("Error decoding: \(error)")
-            failed=true
             return ""
         }
     }
