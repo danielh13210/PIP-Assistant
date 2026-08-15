@@ -52,7 +52,7 @@ struct ContentView: View {
                                 .persistWidth(to: $versionColumnWidth)
                         }
                         .width(min:50,ideal:versionColumnWidth,max:130)
-                        TableColumn("Installed") { $pkg in
+                        TableColumn("Status") { $pkg in
                             pkg.installedLabel()
                                 .persistWidth(to: $installedColumnWidth)
                         }
