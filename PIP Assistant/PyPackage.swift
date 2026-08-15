@@ -3,7 +3,7 @@ import SwiftUI
 
 struct Package : Identifiable, Equatable{
     
-    let id=UUID()
+    var id: String { name }
     let name: String
     let version: String
     var installed: Bool

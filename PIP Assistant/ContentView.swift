@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var filteredPackages:[Package] = []
     @State private var currentPage = 0
     let pageSize = 500   // adjust for performance
+    let loadNextPageThreshold = 20
     @State private var isShowingConfirmation = false
     @State private var isUpdating = false
     @StateObject private var retriever = Retriever()
@@ -45,8 +46,13 @@ struct ContentView: View {
                         TableColumn ("Name") { $pkg in
                             Text(pkg.name)
                                 .persistWidth(to: $nameColumnWidth)
+                                .onAppear {
+                                    if(pkg.name==packages[currentPage*pageSize-loadNextPageThreshold].name){
+                                        loadNextPage()
+                                    }
+                                }
                         }
-                        .width(min:100,ideal:nameColumnWidth)
+                        .width(min:100)
                         TableColumn ("Version") { $pkg in
                             Text(pkg.version)
                                 .persistWidth(to: $versionColumnWidth)
@@ -153,13 +159,6 @@ struct ContentView: View {
 
                 }
                 
-                HStack {
-                    Button("Load More") {
-                        loadNextPage()
-                    }
-                    .disabled(endOfData)
-                }
-                .padding()
             }
             if(busy){
                 Rectangle().opacity(0.5).onTapGesture {}
