@@ -1,20 +1,5 @@
 import SwiftUI
 
-extension View {
-    // Observes the width of a view and writes it back into a binding.
-    func persistWidth(to binding: Binding<Double>) -> some View {
-        self.background(
-            GeometryReader { proxy in
-                Color.clear
-                    .onChange(of: proxy.size.width,initial: false) { _,newWidth in
-                        print(newWidth)
-                        binding.wrappedValue = newWidth
-                    }
-            }
-        )
-    }
-}
-
 struct ContentView: View {
     @State var packages:[Package] = []
     @State private var visiblePackages:[Package] = []
@@ -33,11 +18,6 @@ struct ContentView: View {
     @State private var busyMessage=""
     @State private var selectedPackage:Binding<Package>?=nil
     
-    @AppStorage("nameColumnWidth") private var nameColumnWidth: Double = 200
-    @AppStorage("versionColumnWidth") private var versionColumnWidth: Double = 80
-    @AppStorage("installedColumnWidth") private var installedColumnWidth: Double = 50
-    @AppStorage("actionColumnWidth") private var actionColumnWidth: Double = 50
-    
     var body: some View {
         ZStack {
             VStack {
@@ -45,7 +25,6 @@ struct ContentView: View {
                     Table($visiblePackages) {
                         TableColumn ("Name") { $pkg in
                             Text(pkg.name)
-                                .persistWidth(to: $nameColumnWidth)
                                 .onAppear {
                                     if(pkg.name==packages[currentPage*pageSize-loadNextPageThreshold].name){
                                         loadNextPage()
@@ -55,14 +34,12 @@ struct ContentView: View {
                         .width(min:100)
                         TableColumn ("Version") { $pkg in
                             Text(pkg.version)
-                                .persistWidth(to: $versionColumnWidth)
                         }
-                        .width(min:50,ideal:versionColumnWidth,max:130)
+                        .width(min:50,max:130)
                         TableColumn("Status") { $pkg in
                             pkg.installedLabel()
-                                .persistWidth(to: $installedColumnWidth)
                         }
-                        .width(min:30,ideal:installedColumnWidth,max:50)
+                        .width(min:30,max:50)
                         TableColumn("Action") { $pkg in
                             HStack {
                                 if(pkg.hasUpdates){
@@ -82,7 +59,6 @@ struct ContentView: View {
                                     pkg.installActionLabel()
                                 }
                                 .disabled(pkg.installed && !pkg.hasUpdates && isLocked(name: pkg.name))
-                                .persistWidth(to: $actionColumnWidth)
                                 .buttonStyle(.plain)
                                 .confirmationDialog("Confirm Action", isPresented: $isShowingConfirmation) {
                                     if selectedPackage?.installed.wrappedValue ?? false {
@@ -124,7 +100,7 @@ struct ContentView: View {
                                 }
                             }
                         }
-                        .width(min:30,ideal:actionColumnWidth,max:50)
+                        .width(min:30,max:50)
                     }
                     Color.clear
                         .searchable(text: $searchText, prompt: "Search packages")
